@@ -15,6 +15,11 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
+// Validate that Firebase config keys are set
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("your_")) {
+    throw new Error("Firebase API Key is not set or is still a placeholder. Please add `NEXT_PUBLIC_FIREBASE_API_KEY` to your .env file with a valid key from your Firebase project.");
+}
+
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
