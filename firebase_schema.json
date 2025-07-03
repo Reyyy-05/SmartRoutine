@@ -1,0 +1,22 @@
+{
+  "users": {
+    "$uid": {
+      "username": "string",
+      "email": "string",
+      "role": "string",
+      "created_at": "timestamp"
+    }
+  },
+  "activities": {
+    "$activityId": {
+      "user_id": "string",
+      "activity_type": "string",
+      "activity_name": "string",
+      "duration_minutes": "number",
+      "details": "object",
+      "evidence_path": "string",
+      "status": "string",
+      "created_at": "timestamp"
+    }
+  }
+}
