@@ -2,19 +2,19 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut, Auth } from "firebase/auth"; // Import Auth type
+import { signOut, Auth } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
-import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar"; // Correctly import components
+import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, BarChart3, ShieldCheck, LogOut, Loader2, Workflow } from "lucide-react";
+import { LayoutDashboard, BarChart3, ShieldCheck, LogOut, Loader2 } from "lucide-react";
 
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { userProfile, loading } = useAuth();
 
-  const handleSignOut = async (auth: Auth) => { // Pass auth instance
+  const handleSignOut = async (auth: Auth) => {
     await signOut(auth);
     router.push("/login");
   };
@@ -25,18 +25,23 @@ export function AppSidebar() {
   ];
 
   if (userProfile?.role === 'admin') {
-    menuItems.push({ href: "/admin", label: "Admin Panel", icon: ShieldCheck });
+    menuItems.push({ href: "/admin", label: "Panel Admin", icon: ShieldCheck });
   }
 
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex items-center gap-2 p-2">
-          <Workflow className="w-8 h-8 text-primary" />
-          <h1 className="text-xl font-bold">SmartRoutine</h1>
+        <div className="flex items-center gap-3 p-2">
+          <div className="w-10 h-10 bg-primary-foreground rounded-lg flex items-center justify-center text-white font-bold text-xl">
+            SR
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-sidebar-foreground">SmartRoutine</h1>
+            <p className="text-xs text-sidebar-foreground/70">Dasbor Utama</p>
+          </div>
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="p-2">
         {loading ? (
           <div className="p-4 flex justify-center"><Loader2 className="animate-spin" /></div>
         ) : (
@@ -47,9 +52,10 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     isActive={pathname === item.href}
                     tooltip={item.label}
+                    className="h-11 justify-start"
                   >
-                    <item.icon />
-                    <span>{item.label}</span>
+                    <item.icon className="h-5 w-5 text-primary-foreground" />
+                    <span className="text-base font-medium">{item.label}</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -58,9 +64,9 @@ export function AppSidebar() {
         )}
       </SidebarContent>
       <SidebarFooter>
-         <Button variant="ghost" className="w-full justify-start gap-2" onClick={() => handleSignOut(auth)}> {/* Pass auth instance */}
+         <Button variant="ghost" className="w-full justify-start gap-2 text-sidebar-foreground/80 hover:text-sidebar-foreground" onClick={() => handleSignOut(auth)}>
             <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
+            <span>Logout</span>
          </Button>
       </SidebarFooter>
     </Sidebar>

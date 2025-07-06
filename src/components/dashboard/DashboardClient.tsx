@@ -13,7 +13,7 @@ import { ActivityForm } from "./ActivityForm";
 import { TodaysActivitiesTable } from "./TodaysActivitiesTable";
 import { ProductivityInsights } from "./ProductivityInsights";
 import { Goal, Activity } from "@/types";
-import { Trophy, Loader2 } from "lucide-react";
+import { Trophy, Loader2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 
@@ -35,28 +35,35 @@ export function DashboardClient() {
   const [goalProgress, setGoalProgress] = useState<{ [goalId: string]: number }>({});
   const { toast } = useToast();
 
-  const calculateGoalProgress = useCallback((goal: Goal, activities: Activity[]): number => {
+  const calculateGoalProgress = useCallback((goal: Goal, activities: Activity[]): {progress: number, value: number} => {
     const relevantActivities = activities.filter(activity => activity.activityType === goal.activityCategory && activity.status === 'validated');
 
     if (goal.type === 'daily_duration') {
       const today = new Date().toDateString();
       const dailyActivities = relevantActivities.filter(activity => activity.createdAt.toDate().toDateString() === today);
       const totalDurationToday = dailyActivities.reduce((sum, activity) => sum + activity.durationMinutes, 0);
-      return Math.min((totalDurationToday / goal.targetValue) * 100, 100);
+      return {
+        progress: Math.min((totalDurationToday / goal.targetValue) * 100, 100),
+        value: totalDurationToday
+      };
     } else if (goal.type === 'weekly_frequency') {
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
       const recentActivities = relevantActivities.filter(activity => activity.createdAt.toDate() >= oneWeekAgo);
-      return Math.min((recentActivities.length / goal.targetValue) * 100, 100);
+      return {
+        progress: Math.min((recentActivities.length / goal.targetValue) * 100, 100),
+        value: recentActivities.length
+      };
     }
-    return 0;
+    return { progress: 0, value: 0 };
   }, []);
 
   useEffect(() => {
     const hours = new Date().getHours();
-    if (hours < 12) setGreeting("Good Morning");
-    else if (hours < 18) setGreeting("Good Afternoon");
-    else setGreeting("Good Evening");
+    if (hours < 12) setGreeting("Selamat Pagi");
+    else if (hours < 18) setGreeting("Selamat Siang");
+    else if (hours < 21) setGreeting("Selamat Sore");
+    else setGreeting("Selamat Malam");
 
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -87,13 +94,13 @@ export function DashboardClient() {
       unsubscribeGoals();
       unsubscribeActivities();
     };
-  }, [user]);
+  }, [user, toast]);
 
   useEffect(() => {
-    if (goals.length > 0 && activities.length > 0) {
+    if (goals.length > 0 && activities.length >= 0) {
       const progressMap: { [goalId: string]: number } = {};
       goals.forEach(goal => {
-        progressMap[goal.id!] = calculateGoalProgress(goal, activities);
+        progressMap[goal.id!] = calculateGoalProgress(goal, activities).progress;
       });
       setGoalProgress(progressMap);
     }
@@ -154,128 +161,96 @@ export function DashboardClient() {
   };
 
   if (loading) {
-    return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
+    return <div className="flex h-screen w-full items-center justify-center bg-transparent"><Loader2 className="h-12 w-12 animate-spin text-primary-foreground" /></div>;
   }
 
   if (!user || !userProfile) {
-    // This is a fallback while AuthGuard redirects.
-    return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
+    return <div className="flex h-screen w-full items-center justify-center bg-transparent"><Loader2 className="h-12 w-12 animate-spin text-primary-foreground" /></div>;
   }
 
 
   return (
-    <div className="flex flex-col gap-6 p-4 bg-background min-h-screen">
+    <div className="flex flex-col gap-6 p-6 bg-transparent min-h-screen">
       <Card className="shadow-lg border-none bg-card/80 backdrop-filter backdrop-blur-lg">
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-3xl font-headline">{greeting}, {userProfile.username}!</CardTitle>
-              <CardDescription>Let's make today productive.</CardDescription>
+              <CardTitle className="text-4xl font-bold">{greeting}, {userProfile.username}!</CardTitle>
+              <CardDescription>Ini adalah ringkasan produktivitasmu hari ini.</CardDescription>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-semibold font-mono">{currentTime.toLocaleTimeString()}</p>
-              <p className="text-sm text-muted-foreground">{currentTime.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <p className="text-4xl font-bold font-mono text-foreground/90">{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</p>
+              <p className="text-sm text-muted-foreground">{currentTime.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
           </div>
         </CardHeader>
       </Card>
       
-      <Card className="shadow-lg border-none bg-card/80 backdrop-filter backdrop-blur-lg">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-2xl font-headline">Your Goals</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => setShowAddGoalForm(!showAddGoalForm)}>
-            {showAddGoalForm ? "Hide Form" : "Add New Goal"}
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {showAddGoalForm && (
-            <div className="mb-6 p-6 border rounded-lg bg-card/70 backdrop-filter backdrop-blur-md flex flex-col gap-4">
-              <h3 className="text-lg font-semibold mb-4">Add New Goal</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="space-y-2">
-                  <Label htmlFor="goal-title">Title</Label>
-                  <Input id="goal-title" value={newGoal.title} onChange={(e) => setNewGoal({...newGoal, title: e.target.value})} placeholder="e.g., Read for 1 hour"/>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="goal-type">Type</Label>
-                   <Select onValueChange={(value) => setNewGoal({...newGoal, type: value as "daily_duration" | "weekly_frequency"})} value={newGoal.type}>
-                    <SelectTrigger id="goal-type">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="daily_duration">Daily Duration</SelectItem>
-                      <SelectItem value="weekly_frequency">Weekly Frequency</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="activity-category">Activity Category</Label>
-                  <Select onValueChange={(value) => setNewGoal({...newGoal, activityCategory: value})} value={newGoal.activityCategory}>
-                    <SelectTrigger id="activity-category">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Study">Study</SelectItem>
-                      <SelectItem value="Workout">Workout</SelectItem>
-                      <SelectItem value="Break">Break</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                 <div className="space-y-2">
-                  <Label htmlFor="target-value">Target Value (minutes or frequency)</Label>
-                  <Input id="target-value" type="number" value={newGoal.targetValue || ''} onChange={(e) => setNewGoal({...newGoal, targetValue: parseInt(e.target.value) || 0})} min="1" />
-                </div>
-              </div>
-              <Button onClick={handleAddGoal} className="self-end bg-primary hover:bg-primary/90 text-primary-foreground">Add Goal</Button>
-            </div>
-          )}
-          
-          {goals.length === 0 ? (
-             <div className="text-center text-muted-foreground py-10">
-               <p>No goals set yet.</p>
-               <p>Click "Add New Goal" to get started!</p>
-             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {goals.map(goal => {
-                const progress = goalProgress[goal.id!] ?? 0;
-                return (
-                <Card key={goal.id!} className={`p-4 flex flex-col justify-between border-none rounded-lg shadow-md ${
-                  progress >= 100 ? 'border-l-4 border-green-500 bg-green-50/50' : 'bg-card/70'
-                } backdrop-filter backdrop-blur-md`}>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start mb-2">
-                      <CardTitle className="text-lg font-semibold">{goal.title}</CardTitle>
-                      {progress >= 100 && <Trophy className="h-6 w-6 text-yellow-500" />}
-                    </div>
-                    <CardDescription className="text-sm capitalize">{goal.type.replace(/_/g, ' ')} - {goal.activityCategory}</CardDescription>
-                    
-                    <div className="mt-4">
-                      <div className="flex justify-between items-center text-sm mb-1">
-                         <span>Progress</span>
-                         <span className="font-semibold">{progress.toFixed(0)}%</span>
-                      </div>
-                      <Progress value={progress} className="h-2"/>
-                    </div>
-                  </div>
-                  <div className="flex justify-end mt-4">
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteGoal(goal.id!)}>Delete</Button>
-                  </div>
-                </Card>
-                )
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-fr">
-        <div className="lg:col-span-1 flex flex-col gap-6">
-           <ActivityForm userId={user.uid} />
+        <ActivityForm userId={user.uid} />
+        
+        <TodaysActivitiesTable userId={user.uid} />
+
+        <div className="flex flex-col gap-6">
+            <Card className="shadow-lg border-none bg-card/80 backdrop-filter backdrop-blur-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-lg font-semibold">Target Aktif</CardTitle>
+                    <Button variant="link" size="sm" className="text-primary-foreground" onClick={() => setShowAddGoalForm(!showAddGoalForm)}>
+                        <Plus className="mr-1 h-4 w-4" />
+                        {showAddGoalForm ? "Tutup" : "Tambah"}
+                    </Button>
+                </CardHeader>
+                <CardContent>
+                    {showAddGoalForm && (
+                        <div className="mb-4 p-4 border rounded-lg bg-card/70 flex flex-col gap-3">
+                            <h3 className="text-md font-semibold">Tambah Goal Baru</h3>
+                            <div className="space-y-2">
+                                <Label htmlFor="goal-title">Judul</Label>
+                                <Input id="goal-title" value={newGoal.title} onChange={(e) => setNewGoal({...newGoal, title: e.target.value})} placeholder="e.g., Belajar 1 Jam"/>
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="activity-category">Kategori Aktivitas</Label>
+                                <Select onValueChange={(value) => setNewGoal({...newGoal, activityCategory: value})} value={newGoal.activityCategory}>
+                                    <SelectTrigger id="activity-category"><SelectValue placeholder="Pilih kategori" /></SelectTrigger>
+                                    <SelectContent>
+                                    <SelectItem value="Study">Belajar</SelectItem>
+                                    <SelectItem value="Workout">Olahraga</SelectItem>
+                                    <SelectItem value="Break">Istirahat</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="target-value">Target (menit atau frekuensi)</Label>
+                                <Input id="target-value" type="number" value={newGoal.targetValue || ''} onChange={(e) => setNewGoal({...newGoal, targetValue: parseInt(e.target.value) || 0})} min="1" />
+                            </div>
+                            <Button onClick={handleAddGoal} className="self-end bg-primary-foreground text-white">Tambah Goal</Button>
+                        </div>
+                    )}
+                    {goals.length === 0 ? (
+                        <div className="text-center text-muted-foreground py-5">
+                            <p>Belum ada target.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {goals.map(goal => {
+                                const {progress, value} = calculateGoalProgress(goal, activities);
+                                return (
+                                <div key={goal.id!} className="flex flex-col">
+                                    <div className="flex justify-between items-end text-sm mb-1">
+                                        <span className="font-medium">{goal.title}</span>
+                                        <span className="font-semibold text-muted-foreground">{value}/{goal.targetValue}</span>
+                                    </div>
+                                    <Progress value={progress} className="h-2"/>
+                                    <Button variant="link" size="sm" className="text-destructive self-end h-auto p-0 mt-1" onClick={() => handleDeleteGoal(goal.id!)}>Hapus</Button>
+                                </div>
+                                )
+                            })}
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
            <ProductivityInsights userId={user.uid} />
-        </div>
-        <div className="lg:col-span-2">
-          <TodaysActivitiesTable userId={user.uid} />
         </div>
       </div>
     </div>

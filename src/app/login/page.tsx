@@ -41,8 +41,8 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-primary/10 p-4">
-      <Card className="mx-auto max-w-sm w-full bg-white/30 shadow-xl backdrop-filter backdrop-blur-lg border border-white/20 rounded-lg transition-all duration-300 ease-in-out hover:shadow-2xl">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="mx-auto max-w-sm w-full bg-card/80 shadow-xl backdrop-filter backdrop-blur-lg border-white/20 rounded-lg transition-all duration-300 ease-in-out hover:shadow-2xl">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold">SmartRoutine Pro</CardTitle>
           <CardDescription>Sign in to continue your journey.</CardDescription>
@@ -56,8 +56,8 @@ export default function Login() {
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-            </div> {/* Fix: Ensure input is closed */}
-            <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-300 ease-in-out" disabled={isLoading}>
+            </div>
+            <Button type="submit" className="w-full bg-primary-foreground text-white hover:bg-primary-foreground/90 transition-colors duration-300 ease-in-out" disabled={isLoading}>
                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign in
             </Button>
@@ -73,4 +73,3 @@ export default function Login() {
     </div>
   );
 }
-

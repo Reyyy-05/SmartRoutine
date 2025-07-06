@@ -7,22 +7,22 @@ import { db, storage } from "@/lib/firebase";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import type { Activity } from "@/types";
-import { Trash2, Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Trash2, CheckCircle, XCircle, Loader2, Hourglass } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface TodaysActivitiesTableProps {
   userId: string;
 }
 
 const statusConfig: { [key: string]: { icon: React.ElementType; color: string; text: string } } = {
-    pending: { icon: Clock, color: "bg-amber-500", text: "Pending" },
-    validated: { icon: CheckCircle, color: "bg-green-500", text: "Validated" },
-    rejected: { icon: XCircle, color: "bg-red-500", text: "Rejected" },
+    pending: { icon: Hourglass, color: "text-amber-500", text: "Pending" },
+    validated: { icon: CheckCircle, color: "text-green-500", text: "Validated" },
+    rejected: { icon: XCircle, color: "text-red-500", text: "Rejected" },
 };
 
 export function TodaysActivitiesTable({ userId }: TodaysActivitiesTableProps) {
@@ -78,89 +78,91 @@ export function TodaysActivitiesTable({ userId }: TodaysActivitiesTableProps) {
       }
       
       toast({
-        title: "Activity Deleted",
-        description: `${activity.activityName} has been removed.`,
+        title: "Aktivitas Dihapus",
+        description: `${activity.activityName} telah dihapus.`,
       });
 
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error deleting activity",
+        title: "Error menghapus aktivitas",
         description: error.message,
       });
     }
   };
 
   return (
-    <Card className="shadow-lg h-full">
+    <Card className="shadow-lg h-full border-none bg-card/80 backdrop-filter backdrop-blur-lg">
       <CardHeader>
-        <CardTitle>Today's Activities</CardTitle>
-        <CardDescription>A log of your productive moments from today.</CardDescription>
+        <CardTitle className="text-lg font-semibold">Aktivitas Hari Ini</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 pt-0">
         {isLoading ? (
           <div className="flex justify-center items-center h-40">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : activities.length === 0 ? (
           <div className="text-center text-muted-foreground py-10">
-            <p>No activities logged yet today.</p>
-            <p>Start a new activity to see it here!</p>
+            <p>Belum ada aktivitas hari ini.</p>
+            <p>Mulai aktivitas baru untuk melihatnya di sini!</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Activity</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Duration (min)</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-center">Actions</TableHead>
+                  <TableHead className="text-muted-foreground">AKTIVITAS</TableHead>
+                  <TableHead className="text-muted-foreground text-center">NILAI</TableHead>
+                  <TableHead className="text-muted-foreground text-center">STATUS</TableHead>
+                  <TableHead className="text-muted-foreground text-right">AKSI</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {activities.map((activity) => {
-                   const statusInfo = statusConfig[activity.status] || null;
-                   const StatusIcon = statusInfo?.icon;
+                  const statusInfo = statusConfig[activity.status];
+                  const StatusIcon = statusInfo?.icon;
+                  const priority = activity.details?.priority?.charAt(0) || '-';
+
                   return (
-                  <TableRow key={activity.id}>
-                    <TableCell className="font-medium">{activity.activityName}</TableCell>
-                    <TableCell>{activity.activityType}</TableCell>
-                    <TableCell className="text-right">{activity.durationMinutes}</TableCell>
-                    <TableCell>
-                      {statusInfo && StatusIcon ? (
-                       <Badge variant="outline" className="flex items-center gap-1.5 whitespace-nowrap">
-                         <StatusIcon className={`w-3.5 h-3.5 ${statusInfo.color} text-white rounded-full p-0.5`} />
-                         {statusInfo.text}
-                       </Badge>
-                      ) : (
-                       <Badge variant="outline">Unknown</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete the activity and any associated evidence.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel asChild><Button variant="outline">Cancel</Button></AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(activity)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </TableCell>
-                  </TableRow>
-                )})}
+                    <TableRow key={activity.id}>
+                      <TableCell className="font-medium">
+                          {activity.activityName}
+                          <p className="text-xs text-muted-foreground">{activity.durationMinutes} menit</p>
+                      </TableCell>
+                       <TableCell className="text-center">
+                        <Badge variant={priority === 'T' ? 'destructive' : priority === 'R' ? 'outline' : 'secondary'} className="w-6 h-6 flex items-center justify-center p-0">{priority}</Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {statusInfo && StatusIcon ? (
+                           <StatusIcon className={`w-5 h-5 inline-block ${statusInfo.color}`} />
+                        ) : (
+                         <span>-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-destructive/70 hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tindakan ini tidak bisa dibatalkan. Ini akan menghapus aktivitas secara permanen.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel asChild><Button variant="outline">Batal</Button></AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(activity)} className="bg-destructive hover:bg-destructive/90">Hapus</Button>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

@@ -24,8 +24,17 @@ const ProductivityInsightsInputSchema = z.object({
 
 export type ProductivityInsightsInput = z.infer<typeof ProductivityInsightsInputSchema>;
 
+const InsightItemSchema = z.object({
+  title: z.string().describe("The title of the insight."),
+  description: z.string().describe("The detailed description of the insight provided."),
+});
+
 const ProductivityInsightsOutputSchema = z.object({
-  insights: z.array(z.string()).describe('Array of productivity insights and suggestions.'),
+  insights: z.object({
+    consistency: InsightItemSchema.describe("Insight about the user's consistency in performing activities."),
+    focus: InsightItemSchema.describe("Insight about the user's study/work focus patterns."),
+    rest: InsightItemSchema.describe("Insight about the user's rest and break patterns."),
+  }),
 });
 
 export type ProductivityInsightsOutput = z.infer<typeof ProductivityInsightsOutputSchema>;
@@ -38,17 +47,14 @@ const prompt = ai.definePrompt({
   name: 'productivityInsightsPrompt',
   input: {schema: ProductivityInsightsInputSchema},
   output: {schema: ProductivityInsightsOutputSchema},
-  prompt: `You are a productivity expert providing insights based on user activity data.
+  prompt: `Anda adalah seorang ahli produktivitas bernama "SmartRoutine AI". Analisis riwayat aktivitas pengguna berikut dalam bahasa Indonesia dan berikan analisis cerdas yang dibagi menjadi tiga bagian: konsistensi, fokus belajar, dan waktu istirahat.
 
-  Analyze the following activity history and provide personalized insights and suggestions to improve the user's routines.
-  Focus on consistency, balance across activity types, and sleep patterns if data is available.
+  Berikan judul dan deskripsi untuk setiap bagian. Analisis harus singkat, jelas, dan memberikan saran yang dapat ditindaklanjuti.
 
-  Activity History:
+  Riwayat Aktivitas Pengguna:
   {{#each activityHistory}}
-  - Activity: {{activityName}}, Type: {{activityType}}, Duration: {{durationMinutes}} minutes, CreatedAt: {{createdAt}}
+  - Aktivitas: {{activityName}}, Tipe: {{activityType}}, Durasi: {{durationMinutes}} menit, Detail: {{json details}}, Tanggal: {{createdAt}}
   {{/each}}
-
-  Insights & Suggestions:
   `,
 });
 

@@ -53,8 +53,8 @@ export default function Register() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4" style={{ background: 'linear-gradient(to bottom right, var(--tw-color-background), var(--tw-color-background) 50%)' }}>
-      <Card className="mx-auto max-w-sm w-full bg-white/30 shadow-2xl backdrop-filter backdrop-blur-md">
+    <div className="flex min-h-screen items-center justify-center p-4 bg-background">
+      <Card className="mx-auto max-w-sm w-full bg-card/80 shadow-2xl backdrop-filter backdrop-blur-md">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold">SmartRoutine Pro</CardTitle>
           <CardDescription>Create your account to start building better habits.</CardDescription>
@@ -73,14 +73,14 @@ export default function Register() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-white" />}
+            <Button type="submit" className="w-full bg-primary-foreground text-white hover:bg-primary-foreground/90" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create an account
             </Button>
           </form>
           <div className="mt-4 text-center text-sm text-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="underline text-primary-foreground/80 hover:text-primary-foreground">
+            <Link href="/login" className="underline text-primary-foreground hover:text-primary-foreground/80">
               Sign in
             </Link>
           </div>
