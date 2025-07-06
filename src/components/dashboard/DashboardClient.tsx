@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { collection, query, where, onSnapshot, addDoc, Timestamp, deleteDoc, doc } from "firebase/firestore";
 import { useAuth } from "@/hooks/useAuth";
 import { db } from "@/lib/firebase";
@@ -13,13 +13,13 @@ import { ActivityForm } from "./ActivityForm";
 import { TodaysActivitiesTable } from "./TodaysActivitiesTable";
 import { ProductivityInsights } from "./ProductivityInsights";
 import { Goal, Activity } from "@/types";
-import { Trophy } from "lucide-react";
+import { Trophy, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 
 
 export function DashboardClient() {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, loading } = useAuth();
   const [greeting, setGreeting] = useState("Hello");
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -29,13 +29,13 @@ export function DashboardClient() {
   const [newGoal, setNewGoal] = useState({
     title: "",
     type: "daily_duration" as "daily_duration" | "weekly_frequency",
-    activityCategory: "",
+    activityCategory: "Study",
     targetValue: 0,
   });
   const [goalProgress, setGoalProgress] = useState<{ [goalId: string]: number }>({});
   const { toast } = useToast();
 
-  const calculateGoalProgress = (goal: Goal, activities: Activity[]): number => {
+  const calculateGoalProgress = useCallback((goal: Goal, activities: Activity[]): number => {
     const relevantActivities = activities.filter(activity => activity.activityType === goal.activityCategory && activity.status === 'validated');
 
     if (goal.type === 'daily_duration') {
@@ -50,7 +50,7 @@ export function DashboardClient() {
       return Math.min((recentActivities.length / goal.targetValue) * 100, 100);
     }
     return 0;
-  };
+  }, []);
 
   useEffect(() => {
     const hours = new Date().getHours();
@@ -87,7 +87,7 @@ export function DashboardClient() {
       unsubscribeGoals();
       unsubscribeActivities();
     };
-  }, [user, toast]);
+  }, [user]);
 
   useEffect(() => {
     if (goals.length > 0 && activities.length > 0) {
@@ -97,7 +97,7 @@ export function DashboardClient() {
       });
       setGoalProgress(progressMap);
     }
-  }, [goals, activities]);
+  }, [goals, activities, calculateGoalProgress]);
 
   const handleAddGoal = async () => {
     if (!user) {
@@ -133,7 +133,7 @@ export function DashboardClient() {
         createdAt: Timestamp.now(),
       });
       toast({ title: "Goal Added", description: "Your new goal has been successfully added." });
-      setNewGoal({ title: "", type: "daily_duration", activityCategory: "", targetValue: 0 });
+      setNewGoal({ title: "", type: "daily_duration", activityCategory: "Study", targetValue: 0 });
       setShowAddGoalForm(false);
     } catch (error) {
       console.error("Error adding goal: ", error);
@@ -153,9 +153,15 @@ export function DashboardClient() {
     }
   };
 
-  if (!user || !userProfile) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  if (loading) {
+    return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
+
+  if (!user || !userProfile) {
+    // This is a fallback while AuthGuard redirects.
+    return <div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
+  }
+
 
   return (
     <div className="flex flex-col gap-6 p-4 bg-background min-h-screen">
@@ -204,7 +210,16 @@ export function DashboardClient() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="activity-category">Activity Category</Label>
-                   <Input id="activity-category" value={newGoal.activityCategory} onChange={(e) => setNewGoal({...newGoal, activityCategory: e.target.value})} placeholder="e.g., Study" />
+                  <Select onValueChange={(value) => setNewGoal({...newGoal, activityCategory: value})} value={newGoal.activityCategory}>
+                    <SelectTrigger id="activity-category">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Study">Study</SelectItem>
+                      <SelectItem value="Workout">Workout</SelectItem>
+                      <SelectItem value="Break">Break</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                  <div className="space-y-2">
                   <Label htmlFor="target-value">Target Value (minutes or frequency)</Label>
