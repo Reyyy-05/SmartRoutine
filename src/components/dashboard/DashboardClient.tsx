@@ -100,19 +100,36 @@ export function DashboardClient() {
 
 
   const handleAddGoal = async () => {
-    if (!user || !newGoal.title.trim() || !newGoal.type || !newGoal.activityCategory.trim() || newGoal.targetValue <= 0 || isNaN(newGoal.targetValue)) {
+    if (!user) {
+      toast({ title: "Error", description: "User not authenticated.", variant: "destructive" });
+ return;
+    }
+    if (!newGoal.title.trim() || !newGoal.activityCategory.trim() || !newGoal.type) {
       toast({
+ title: "Validation Error",
         title: "Validation Error",
-        description: "Please fill in all fields and ensure target value is greater than 0.",
+        description: "Title and Activity Category cannot be empty.",
         variant: "destructive",
       });
       return;
     }
 
+    if (newGoal.targetValue <= 0 || isNaN(newGoal.targetValue)) {
+     toast({
+       title: "Validation Error",
+       description: "Target value must be a positive number.",
+       variant: "destructive",
+     });
+     return;
+   }
+
     try {
       await addDoc(collection(db, "goals"), {
         userId: user.uid,
-        ...newGoal,
+        title: newGoal.title.trim(),
+        type: newGoal.type,
+        activityCategory: newGoal.activityCategory.trim(),
+        targetValue: newGoal.targetValue,
         status: "active",
         createdAt: Timestamp.now(),
       });
@@ -120,18 +137,20 @@ export function DashboardClient() {
       setNewGoal({ title: "", type: "daily_duration", activityCategory: "", targetValue: 0 });
       setShowAddGoalForm(false);
     } catch (error) {
-      console.error("Error adding goal: ", error);
-      toast({ title: "Error", description: "Failed to add goal.", variant: "destructive" });
-    }
-  };
+  } catch (error) {
+    // ... penanganan error
+  }
 
   const handleDeleteGoal = async (goalId: string) => {
-    if (!user) return;
+    if (!user) return; // Pastikan ada cek user
+
     try {
-      await deleteDoc(doc(db, "goals", goalId));
+      // Periksa apakah pemanggilan doc dan deleteDoc sudah benar
+      await deleteDoc(doc(db, "goals", goalId)); // Pastikan ini menggunakan doc(db, "goals", goalId)
       toast({ title: "Goal Deleted", description: "The goal has been successfully deleted." });
     } catch (error) {
       console.error("Error deleting goal: ", error);
+      toast({ title: "Error", description: "Failed to delete goal.", variant: "destructive" });
       toast({ title: "Error", description: "Failed to delete goal.", variant: "destructive" });
     }
   };
@@ -199,26 +218,32 @@ export function DashboardClient() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {goals.length === 0 && (
-              <p className="text-muted-foreground text-center col-span-full">No goals added yet. Start by adding a new goal!</p>
-            )}
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* ... pesan jika goals kosong */}
             {goals.map(goal => (
-              <Card key={goal.id} className={`p-4 flex flex-col justify-between border-none bg-card/70 backdrop-filter backdrop-blur-md ${goalProgress[goal.id!] >= 100 ? 'border-l-4 border-green-500' : ''}`}>
+              // ====> MULAI AREA PENYESUAIAN DI SINI <====
+              <Card key={goal.id!} className={`p-4 flex flex-col justify-between border-none rounded-lg shadow-md ${ // Added rounded-lg and shadow-md
+
+                goalProgress[goal.id!] >= 100 ? 'border-l-4 border-green-500 bg-green-50' : 'bg-card/70' // Contoh penyesuaian warna jika selesai
+              } backdrop-filter backdrop-blur-md`}>
                 <div>
+                  {/* ... Judul Target, Ikon Piala */}
                   <div className="flex justify-between items-center mb-2">
-                    <CardTitle className="text-lg">{goal.title}</CardTitle>
-                    {goalProgress[goal.id!] >= 100 && <Trophy className="h-6 w-6 text-green-600" />}
+                     <CardTitle className="text-lg">{goal.title}</CardTitle> {/* Periksa kelas teks */}
+                    {goalProgress[goal.id!] >= 100 && <Trophy className="h-6 w-6 text-green-600" />} {/* Periksa warna ikon */}
                   </div>
-                  <CardDescription>{goal.type.replace('_', ' ')} - {goal.activityCategory}</CardDescription>
-                  <p className="text-sm mt-2">Progress: {goalProgress[goal.id!]?.toFixed(1) ?? '0.0'}%</p>
+                  <CardDescription>{goal.type.replace('_', ' ')} - {goal.activityCategory}</CardDescription> {/* Periksa kelas teks */}
+                  <p className="text-sm mt-2">Progress: {goalProgress[goal.id!]?.toFixed(1) ?? '0.0'}%</p> {/* Periksa kelas teks dan format progres */}
                 </div>
                  <div className="flex justify-end mt-4">
+
                   <Button variant="destructive" size="sm" onClick={() => handleDeleteGoal(goal.id!)}>Delete</Button>
                 </div>
               </Card>
-            ))} 
+              // ====> AKHIR AREA PENYESUAIAN DI SINI <====
+            ))}
           </div>
+
           </CardContent>
       </Card>
 
@@ -234,3 +259,4 @@ export function DashboardClient() {
     </div>
   );
 }
+};

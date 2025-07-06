@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Play, Square } from "lucide-react";
+
 interface ActivityFormProps {
   userId: string;
 }
@@ -18,6 +19,7 @@ interface ActivityFormProps {
 export function ActivityForm({ userId }: ActivityFormProps) {
   const [activityName, setActivityName] = useState("");
   const [activityType, setActivityType] = useState<"Study" | "Workout" | "Break">("Study");
+  const [activityDetails, setActivityDetails] = useState<{ [key: string]: any }>({});
   const [isTracking, setIsTracking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
@@ -56,11 +58,11 @@ export function ActivityForm({ userId }: ActivityFormProps) {
   const handleFinish = async () => {
     setIsLoading(true);
     if (intervalRef.current) clearInterval(intervalRef.current);
-    
+
     try {
       let evidenceUrl = "";
       if (evidenceFile) {
- const fileRef = ref(storage, `uploads/${userId}/${Date.now()}_${evidenceFile.name}`);
+        const fileRef = ref(storage, `uploads/${userId}/${Date.now()}_${evidenceFile.name}`);
         await uploadBytes(fileRef, evidenceFile);
         evidenceUrl = await getDownloadURL(fileRef);
       }
@@ -72,9 +74,9 @@ export function ActivityForm({ userId }: ActivityFormProps) {
         activityName,
         activityType,
         durationMinutes,
-        details: {}, // Can be extended later
+        details: activityDetails,
         evidenceUrl: evidenceUrl || null,
- status: 'pending', // Ensure status is a string literal
+        status: 'pending',
         createdAt: serverTimestamp(),
       });
 
@@ -89,6 +91,7 @@ export function ActivityForm({ userId }: ActivityFormProps) {
       setEvidenceFile(null);
       setIsTracking(false);
       setElapsedTime(0);
+      setActivityDetails({});
 
     } catch (error: any) {
       toast({
@@ -124,7 +127,10 @@ export function ActivityForm({ userId }: ActivityFormProps) {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="activity-type">Activity Type</Label>
-              <Select value={activityType} onValueChange={(value: "Study" | "Workout" | "Break") => setActivityType(value)}>
+              <Select value={activityType} onValueChange={(value: "Study" | "Workout" | "Break") => {
+                setActivityType(value)
+                setActivityDetails({}); // Reset details on type change
+              }}>
                 <SelectTrigger id="activity-type">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
@@ -135,6 +141,56 @@ export function ActivityForm({ userId }: ActivityFormProps) {
                 </SelectContent>
               </Select>
             </div>
+
+            {activityType === 'Study' && (
+              <div className="grid gap-2">
+                <Label htmlFor="study-focus">Study Focus (Optional)</Label>
+                <Input
+                  id="study-focus"
+                  placeholder="e.g., Chapter 3, React Hooks"
+                  value={activityDetails.studyFocus || ''}
+                  onChange={(e) => setActivityDetails({ ...activityDetails, studyFocus: e.target.value })}
+                />
+              </div>
+            )}
+
+            {activityType === 'Workout' && (
+              <div className="grid gap-2">
+                <Label htmlFor="workout-intensity">Intensity Level (Optional)</Label>
+                <Select
+                  value={activityDetails.workoutIntensity || ''}
+                  onValueChange={(value) => setActivityDetails({ ...activityDetails, workoutIntensity: value })}
+                >
+                  <SelectTrigger id="workout-intensity">
+                    <SelectValue placeholder="Select intensity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {activityType === 'Break' && (
+              <div className="grid gap-2">
+                <Label htmlFor="break-quality">Break/Sleep Quality (Optional)</Label>
+                <Select
+                  value={activityDetails.breakQuality || ''}
+                  onValueChange={(value) => setActivityDetails({ ...activityDetails, breakQuality: value })}
+                >
+                  <SelectTrigger id="break-quality">
+                    <SelectValue placeholder="Select quality" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="refreshing">Refreshing</SelectItem>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="tired">Tired</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </>
         ) : (
           <div className="text-center">
@@ -149,13 +205,12 @@ export function ActivityForm({ userId }: ActivityFormProps) {
       </CardContent>
       <CardFooter>
         {!isTracking ? (
-          <Button className="w-full" onClick={handleStart}>
-            <Play className="mr-2 h-4 w-4" />
-            Start Activity
+          <Button onClick={handleStart} className="w-full">
+            <Play className="mr-2" /> Start Tracking
           </Button>
         ) : (
-          <Button className="w-full" onClick={handleFinish} disabled={isLoading}>
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Square className="mr-2 h-4 w-4" />}
+          <Button onClick={handleFinish} className="w-full" disabled={isLoading}>
+            {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Square className="mr-2" />}
             Finish & Save
           </Button>
         )}
