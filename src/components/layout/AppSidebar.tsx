@@ -29,19 +29,19 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar>
+    <Sidebar className="bg-white/25 backdrop-blur-xl border-r border-white/30 text-gray-800 shadow-2xl">
       <SidebarHeader>
-        <div className="flex items-center gap-3 p-2">
-          <div className="w-10 h-10 bg-primary-foreground rounded-lg flex items-center justify-center text-white font-bold text-xl">
+        <div className="flex items-center gap-4 p-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center text-2xl font-bold text-white shadow-lg">
             SR
           </div>
           <div>
-            <h1 className="text-lg font-bold text-sidebar-foreground">SmartRoutine</h1>
-            <p className="text-xs text-sidebar-foreground/70">Dasbor Utama</p>
+            <h1 className="font-bold text-xl text-gray-800">SmartRoutine</h1>
+            <p className="text-gray-600 text-sm">Dasbor Utama</p>
           </div>
         </div>
       </SidebarHeader>
-      <SidebarContent className="p-2">
+      <SidebarContent className="p-4">
         {loading ? (
           <div className="p-4 flex justify-center"><Loader2 className="animate-spin" /></div>
         ) : (
@@ -50,12 +50,12 @@ export function AppSidebar() {
               <SidebarMenuItem key={item.href}>
                 <Link href={item.href} passHref>
                   <SidebarMenuButton
-                    isActive={pathname === item.href}
+                    isActive={pathname.startsWith(item.href)}
                     tooltip={item.label}
-                    className="h-11 justify-start"
+                    className="h-12 justify-start rounded-2xl text-base font-medium text-gray-600 hover:bg-black/5 hover:text-gray-900 data-[active=true]:bg-gradient-to-r data-[active=true]:from-pink-500/10 data-[active=true]:to-purple-500/10 data-[active=true]:text-pink-600 data-[active=true]:shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
                   >
-                    <item.icon className="h-5 w-5 text-primary-foreground" />
-                    <span className="text-base font-medium">{item.label}</span>
+                    <item.icon className="h-5 w-5 text-gray-500 data-[active=true]:text-pink-500" />
+                    <span>{item.label}</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -63,9 +63,9 @@ export function AppSidebar() {
           </SidebarMenu>
         )}
       </SidebarContent>
-      <SidebarFooter>
-         <Button variant="ghost" className="w-full justify-start gap-2 text-sidebar-foreground/80 hover:text-sidebar-foreground" onClick={() => handleSignOut(auth)}>
-            <LogOut className="w-4 h-4" />
+      <SidebarFooter className="p-4 border-t border-gray-200/50">
+         <Button variant="ghost" className="w-full justify-start gap-3 p-3 h-12 rounded-2xl text-base font-medium text-gray-600 hover:text-red-600 hover:bg-red-500/10" onClick={() => handleSignOut(auth)}>
+            <LogOut className="w-5 h-5" />
             <span>Logout</span>
          </Button>
       </SidebarFooter>

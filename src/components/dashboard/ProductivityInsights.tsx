@@ -6,7 +6,7 @@ import { collection, query, where, getDocs, orderBy, limit } from "firebase/fire
 import { db } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Lightbulb, Trophy, BrainCircuit, TriangleAlert } from "lucide-react";
+import { Loader2, Lightbulb, Trophy, BrainCircuit, AlertTriangle, RefreshCw } from "lucide-react";
 
 interface ProductivityInsightsProps {
   userId: string;
@@ -15,7 +15,7 @@ interface ProductivityInsightsProps {
 const insightIcons: { [key: string]: React.ElementType } = {
   consistency: Trophy,
   focus: BrainCircuit,
-  rest: TriangleAlert,
+  rest: AlertTriangle,
 };
 
 export function ProductivityInsights({ userId }: ProductivityInsightsProps) {
@@ -33,7 +33,7 @@ export function ProductivityInsights({ userId }: ProductivityInsightsProps) {
         collection(db, "activities"),
         where("userId", "==", userId),
         orderBy("createdAt", "desc"),
-        limit(50) // Limit to last 50 activities for performance
+        limit(50)
       );
       
       const querySnapshot = await getDocs(q);
@@ -73,35 +73,36 @@ export function ProductivityInsights({ userId }: ProductivityInsightsProps) {
 
 
   return (
-    <Card className="shadow-lg border-none bg-card/80 backdrop-filter backdrop-blur-lg">
+    <Card className="bg-white/40 backdrop-blur-2xl border border-white/50 rounded-3xl shadow-lg">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center gap-2">
-            <Lightbulb className="w-5 h-5 text-primary-foreground" />
-            <CardTitle className="text-lg font-semibold">Analisis Cerdas</CardTitle>
+            <BrainCircuit className="w-6 h-6 text-purple-500" />
+            <CardTitle className="text-xl font-semibold text-gray-800">Analisis Cerdas</CardTitle>
         </div>
-        <Button variant="ghost" size="icon" onClick={fetchInsights} disabled={isLoading}>
-            <Lightbulb className={`h-5 w-5 ${isLoading ? 'animate-pulse' : ''}`} />
+        <Button variant="ghost" size="icon" onClick={fetchInsights} disabled={isLoading} className="text-gray-500 hover:text-purple-500 hover:bg-purple-500/10 rounded-full">
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
         </Button>
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="flex items-center justify-center p-4">
-            <Loader2 className="h-6 w-6 animate-spin text-primary-foreground" />
-            <p className="ml-2">Menganalisis pola Anda...</p>
+          <div className="flex items-center justify-center p-4 text-gray-600">
+            <Loader2 className="h-5 w-5 animate-spin text-purple-500" />
+            <p className="ml-2 text-sm">Menganalisis pola Anda...</p>
           </div>
         ) : error ? (
-          <p className="text-muted-foreground text-center text-sm p-4">{error}</p>
+          <p className="text-gray-500 text-center text-sm p-4">{error}</p>
         ) : (
           <div className="space-y-4">
             {insights && Object.entries(insights).map(([key, insight]) => {
               if (!insight.title) return null;
-              const Icon = insightIcons[key] || BrainCircuit;
+              const Icon = insightIcons[key] || Lightbulb;
+               const iconColor = key === 'consistency' ? 'text-green-600' : key === 'focus' ? 'text-blue-600' : 'text-yellow-600';
               return (
                 <div key={key} className="flex items-start gap-3">
-                    <Icon className="w-5 h-5 mt-1 text-secondary flex-shrink-0" />
+                    <Icon className={`w-5 h-5 mt-1 flex-shrink-0 ${iconColor}`} />
                     <div>
-                        <h4 className="font-semibold">{insight.title}</h4>
-                        <p className="text-sm text-foreground/80">{insight.description}</p>
+                        <h4 className="font-semibold text-sm text-gray-800">{insight.title}</h4>
+                        <p className="text-xs text-gray-600">{insight.description}</p>
                     </div>
                 </div>
               )
