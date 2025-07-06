@@ -19,7 +19,7 @@ interface TodaysActivitiesTableProps {
   userId: string;
 }
 
-const statusConfig = {
+const statusConfig: { [key: string]: { icon: React.ElementType; color: string; text: string } } = {
     pending: { icon: Clock, color: "bg-amber-500", text: "Pending" },
     validated: { icon: CheckCircle, color: "bg-green-500", text: "Validated" },
     rejected: { icon: XCircle, color: "bg-red-500", text: "Rejected" },
@@ -31,19 +31,18 @@ export function TodaysActivitiesTable({ userId }: TodaysActivitiesTableProps) {
   const { toast } = useToast();
 
   useEffect(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    // Check if userId is available before fetching
     if (!userId) {
         setIsLoading(false);
         return;
     }
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
     const q = query(
-      collection(db, `activities`),
+      collection(db, "activities"),
       where("userId", "==", userId),
       where("createdAt", ">=", Timestamp.fromDate(today)),
       where("createdAt", "<", Timestamp.fromDate(tomorrow)),
@@ -51,38 +50,31 @@ export function TodaysActivitiesTable({ userId }: TodaysActivitiesTableProps) {
     );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const userActivities: Activity[] = [];
-      querySnapshot.forEach((doc) => {
-        userActivities.push({ id: doc.id, ...doc.data() } as Activity);
-
-      });
-      // Sort activities by createdAt descending, as Firestore orderBy might not be guaranteed client-side with onSnapshot without indexing
-      userActivities.sort((a, b) => {
-        const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
-        const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
-        return dateB - dateA; // Descending
-      });
-
+      const userActivities: Activity[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Activity));
       setActivities(userActivities);
       setIsLoading(false);
+    }, (error) => {
+        console.error("Error fetching today's activities: ", error);
+        toast({ title: "Error", description: "Could not fetch today's activities.", variant: "destructive" });
+        setIsLoading(false);
     });
 
     return () => unsubscribe();
-  }, [userId]);
+  }, [userId, toast]);
 
   const handleDelete = async (activity: Activity) => {
-    if (!userId || !activity?.id) {
-        toast({ title: "Error", description: "Unable to delete activity. Missing user or activity ID.", variant: "destructive" });
+    if (!activity?.id) {
+        toast({ title: "Error", description: "Unable to delete activity. Missing activity ID.", variant: "destructive" });
         return;
     }
     try {
-      // Delete from Firestore
       await deleteDoc(doc(db, "activities", activity.id));
 
-      // Delete from Storage if evidence exists
       if (activity.evidenceUrl) {
         const fileRef = ref(storage, activity.evidenceUrl);
-        await deleteObject(fileRef).catch((storageError) => console.warn("Failed to delete storage evidence:", storageError)); // Catch storage error gracefully
+        await deleteObject(fileRef).catch((storageError) => {
+            console.warn("Could not delete evidence file from storage:", storageError);
+        });
       }
       
       toast({
@@ -124,36 +116,30 @@ export function TodaysActivitiesTable({ userId }: TodaysActivitiesTableProps) {
                   <TableHead>Type</TableHead>
                   <TableHead className="text-right">Duration (min)</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {activities.map((activity) => {
-                   const StatusIcon = statusConfig[activity.status].icon;
-                   const statusColor = statusConfig[activity.status].color;
-                   const statusText = statusConfig[activity.status].text;
-                  return(
+                   const statusInfo = statusConfig[activity.status] || null;
+                   const StatusIcon = statusInfo?.icon;
+                  return (
                   <TableRow key={activity.id}>
                     <TableCell className="font-medium">{activity.activityName}</TableCell>
                     <TableCell>{activity.activityType}</TableCell>
                     <TableCell className="text-right">{activity.durationMinutes}</TableCell>
-                    {/* Add a check for activity.status existence and validity */}
-                    <TableCell>{activity.status && statusConfig[activity.status] ? (
-                        // @ts-ignore - StatusIcon type is inferred dynamically but known at runtime based on statusConfig
-                        <>
-
-                       <Badge variant="outline" className="flex items-center gap-1.5 whitespace-nowrap">
-                         <StatusIcon className={`w-3.5 h-3.5 ${statusColor} text-white rounded-full p-0.5`} />
-                         {statusText}
-                       </Badge>
-                    </TableCell>
                     <TableCell>
+                      {statusInfo && StatusIcon ? (
+                       <Badge variant="outline" className="flex items-center gap-1.5 whitespace-nowrap">
+                         <StatusIcon className={`w-3.5 h-3.5 ${statusInfo.color} text-white rounded-full p-0.5`} />
+                         {statusInfo.text}
+                       </Badge>
+                      ) : (
+                       <Badge variant="outline">Unknown</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
                       <AlertDialog>
-                         </>
-                    ) : (
-                       <Badge variant="outline">Unknown Status</Badge>
-                    )}</TableCell>
-                    <TableCell> {/* Actions Cell */}
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
                             <Trash2 className="h-4 w-4" />

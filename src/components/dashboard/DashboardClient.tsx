@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ActivityForm } from "./ActivityForm";
 import { TodaysActivitiesTable } from "./TodaysActivitiesTable";
-import { ProductivityInsights } from "../ProductivityInsights";
+import { ProductivityInsights } from "./ProductivityInsights";
 import { Goal, Activity } from "@/types";
 import { Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
