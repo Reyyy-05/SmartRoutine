@@ -32,14 +32,3 @@ export interface Goal {
   status: 'active' | 'completed';
   createdAt: Timestamp;
 }
-
-export interface Goal {
-  id?: string;
-  userId: string;
-  title: string;
-  type: 'daily_duration' | 'weekly_frequency';
-  activityCategory: string;
-  targetValue: number;
-  status: 'active' | 'completed';
-  createdAt: Timestamp;
-}

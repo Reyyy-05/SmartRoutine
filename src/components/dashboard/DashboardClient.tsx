@@ -15,6 +15,8 @@ import { ProductivityInsights } from "./ProductivityInsights";
 import { Goal, Activity } from "@/types";
 import { Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
+
 
 export function DashboardClient() {
   const { user, userProfile } = useAuth();
@@ -26,14 +28,13 @@ export function DashboardClient() {
   const [showAddGoalForm, setShowAddGoalForm] = useState(false);
   const [newGoal, setNewGoal] = useState({
     title: "",
-    type: "daily_duration",
+    type: "daily_duration" as "daily_duration" | "weekly_frequency",
     activityCategory: "",
     targetValue: 0,
   });
   const [goalProgress, setGoalProgress] = useState<{ [goalId: string]: number }>({});
   const { toast } = useToast();
 
-  // Helper function to calculate goal progress
   const calculateGoalProgress = (goal: Goal, activities: Activity[]): number => {
     const relevantActivities = activities.filter(activity => activity.activityType === goal.activityCategory && activity.status === 'validated');
 
@@ -89,7 +90,7 @@ export function DashboardClient() {
   }, [user, toast]);
 
   useEffect(() => {
-    if (goals.length > 0) {
+    if (goals.length > 0 && activities.length > 0) {
       const progressMap: { [goalId: string]: number } = {};
       goals.forEach(goal => {
         progressMap[goal.id!] = calculateGoalProgress(goal, activities);
@@ -98,17 +99,15 @@ export function DashboardClient() {
     }
   }, [goals, activities]);
 
-
   const handleAddGoal = async () => {
     if (!user) {
       toast({ title: "Error", description: "User not authenticated.", variant: "destructive" });
- return;
+      return;
     }
     if (!newGoal.title.trim() || !newGoal.activityCategory.trim() || !newGoal.type) {
       toast({
- title: "Validation Error",
         title: "Validation Error",
-        description: "Title and Activity Category cannot be empty.",
+        description: "Title, type, and activity category cannot be empty.",
         variant: "destructive",
       });
       return;
@@ -137,20 +136,19 @@ export function DashboardClient() {
       setNewGoal({ title: "", type: "daily_duration", activityCategory: "", targetValue: 0 });
       setShowAddGoalForm(false);
     } catch (error) {
-  } catch (error) {
-    // ... penanganan error
-  }
+      console.error("Error adding goal: ", error);
+      toast({ title: "Error", description: "Failed to add goal.", variant: "destructive" });
+    }
+  };
 
   const handleDeleteGoal = async (goalId: string) => {
-    if (!user) return; // Pastikan ada cek user
+    if (!user) return;
 
     try {
-      // Periksa apakah pemanggilan doc dan deleteDoc sudah benar
-      await deleteDoc(doc(db, "goals", goalId)); // Pastikan ini menggunakan doc(db, "goals", goalId)
+      await deleteDoc(doc(db, "goals", goalId));
       toast({ title: "Goal Deleted", description: "The goal has been successfully deleted." });
     } catch (error) {
       console.error("Error deleting goal: ", error);
-      toast({ title: "Error", description: "Failed to delete goal.", variant: "destructive" });
       toast({ title: "Error", description: "Failed to delete goal.", variant: "destructive" });
     }
   };
@@ -190,7 +188,7 @@ export function DashboardClient() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="space-y-2">
                   <Label htmlFor="goal-title">Title</Label>
-                  <Input id="goal-title" value={newGoal.title} onChange={(e) => setNewGoal({...newGoal, title: e.target.value})} />
+                  <Input id="goal-title" value={newGoal.title} onChange={(e) => setNewGoal({...newGoal, title: e.target.value})} placeholder="e.g., Read for 1 hour"/>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="goal-type">Type</Label>
@@ -210,41 +208,50 @@ export function DashboardClient() {
                 </div>
                  <div className="space-y-2">
                   <Label htmlFor="target-value">Target Value (minutes or frequency)</Label>
-                  <Input id="target-value" type="number" value={newGoal.targetValue} onChange={(e) => setNewGoal({...newGoal, targetValue: parseInt(e.target.value) || 0})} min="1" />
+                  <Input id="target-value" type="number" value={newGoal.targetValue || ''} onChange={(e) => setNewGoal({...newGoal, targetValue: parseInt(e.target.value) || 0})} min="1" />
                 </div>
               </div>
-
               <Button onClick={handleAddGoal} className="self-end bg-primary hover:bg-primary/90 text-primary-foreground">Add Goal</Button>
             </div>
           )}
-
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* ... pesan jika goals kosong */}
-            {goals.map(goal => (
-              // ====> MULAI AREA PENYESUAIAN DI SINI <====
-              <Card key={goal.id!} className={`p-4 flex flex-col justify-between border-none rounded-lg shadow-md ${ // Added rounded-lg and shadow-md
-
-                goalProgress[goal.id!] >= 100 ? 'border-l-4 border-green-500 bg-green-50' : 'bg-card/70' // Contoh penyesuaian warna jika selesai
-              } backdrop-filter backdrop-blur-md`}>
-                <div>
-                  {/* ... Judul Target, Ikon Piala */}
-                  <div className="flex justify-between items-center mb-2">
-                     <CardTitle className="text-lg">{goal.title}</CardTitle> {/* Periksa kelas teks */}
-                    {goalProgress[goal.id!] >= 100 && <Trophy className="h-6 w-6 text-green-600" />} {/* Periksa warna ikon */}
+          
+          {goals.length === 0 ? (
+             <div className="text-center text-muted-foreground py-10">
+               <p>No goals set yet.</p>
+               <p>Click "Add New Goal" to get started!</p>
+             </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {goals.map(goal => {
+                const progress = goalProgress[goal.id!] ?? 0;
+                return (
+                <Card key={goal.id!} className={`p-4 flex flex-col justify-between border-none rounded-lg shadow-md ${
+                  progress >= 100 ? 'border-l-4 border-green-500 bg-green-50/50' : 'bg-card/70'
+                } backdrop-filter backdrop-blur-md`}>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start mb-2">
+                      <CardTitle className="text-lg font-semibold">{goal.title}</CardTitle>
+                      {progress >= 100 && <Trophy className="h-6 w-6 text-yellow-500" />}
+                    </div>
+                    <CardDescription className="text-sm capitalize">{goal.type.replace(/_/g, ' ')} - {goal.activityCategory}</CardDescription>
+                    
+                    <div className="mt-4">
+                      <div className="flex justify-between items-center text-sm mb-1">
+                         <span>Progress</span>
+                         <span className="font-semibold">{progress.toFixed(0)}%</span>
+                      </div>
+                      <Progress value={progress} className="h-2"/>
+                    </div>
                   </div>
-                  <CardDescription>{goal.type.replace('_', ' ')} - {goal.activityCategory}</CardDescription> {/* Periksa kelas teks */}
-                  <p className="text-sm mt-2">Progress: {goalProgress[goal.id!]?.toFixed(1) ?? '0.0'}%</p> {/* Periksa kelas teks dan format progres */}
-                </div>
-                 <div className="flex justify-end mt-4">
-
-                  <Button variant="destructive" size="sm" onClick={() => handleDeleteGoal(goal.id!)}>Delete</Button>
-                </div>
-              </Card>
-              // ====> AKHIR AREA PENYESUAIAN DI SINI <====
-            ))}
-          </div>
-
-          </CardContent>
+                  <div className="flex justify-end mt-4">
+                    <Button variant="destructive" size="sm" onClick={() => handleDeleteGoal(goal.id!)}>Delete</Button>
+                  </div>
+                </Card>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-fr">
@@ -259,4 +266,3 @@ export function DashboardClient() {
     </div>
   );
 }
-};
