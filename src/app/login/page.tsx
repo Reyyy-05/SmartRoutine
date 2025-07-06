@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth } from "@/lib/firebase"; // Assuming firebase.ts exports auth
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +28,7 @@ export default function Login() {
         title: "Login Successful",
         description: "Welcome back!",
       });
-      router.push("/dashboard");
+      router.push("/dashboard"); // Redirect to dashboard on success
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -41,8 +41,8 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="mx-auto max-w-sm w-full shadow-2xl">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-primary/10 p-4">
+      <Card className="mx-auto max-w-sm w-full bg-white/30 shadow-xl backdrop-filter backdrop-blur-lg border border-white/20 rounded-lg transition-all duration-300 ease-in-out hover:shadow-2xl">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold">SmartRoutine Pro</CardTitle>
           <CardDescription>Sign in to continue your journey.</CardDescription>
@@ -52,18 +52,18 @@ export default function Login() {
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
-            </div>
+            </div> 
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            </div> {/* Fix: Ensure input is closed */}
+            <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-300 ease-in-out" disabled={isLoading}>
                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign in
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
+            Don&apos;t have an account?{' '}
             <Link href="/register" className="underline text-primary-foreground/80 hover:text-primary-foreground">
               Sign up
             </Link>
@@ -73,3 +73,4 @@ export default function Login() {
     </div>
   );
 }
+

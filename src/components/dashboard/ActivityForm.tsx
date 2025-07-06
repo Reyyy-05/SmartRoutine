@@ -10,8 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Play, Square, Upload } from "lucide-react";
-
+import { Loader2, Play, Square } from "lucide-react";
 interface ActivityFormProps {
   userId: string;
 }
@@ -61,7 +60,7 @@ export function ActivityForm({ userId }: ActivityFormProps) {
     try {
       let evidenceUrl = "";
       if (evidenceFile) {
-        const fileRef = ref(storage, `uploads/${userId}/${Date.now()}_${evidenceFile.name}`);
+ const fileRef = ref(storage, `uploads/${userId}/${Date.now()}_${evidenceFile.name}`);
         await uploadBytes(fileRef, evidenceFile);
         evidenceUrl = await getDownloadURL(fileRef);
       }
@@ -75,7 +74,7 @@ export function ActivityForm({ userId }: ActivityFormProps) {
         durationMinutes,
         details: {}, // Can be extended later
         evidenceUrl: evidenceUrl || null,
-        status: "pending",
+ status: 'pending', // Ensure status is a string literal
         createdAt: serverTimestamp(),
       });
 

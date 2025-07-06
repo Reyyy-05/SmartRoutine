@@ -20,3 +20,14 @@ export interface Activity {
   createdAt: Timestamp;
   username?: string; // For client-side join in admin panel
 }
+
+export interface Goal {
+  id?: string;
+  userId: string;
+  title: string;
+  type: 'daily_duration' | 'weekly_frequency';
+  activityCategory: string;
+  targetValue: number;
+  status: 'active' | 'completed';
+  createdAt: Timestamp;
+}

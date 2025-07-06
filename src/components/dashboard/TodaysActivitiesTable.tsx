@@ -35,9 +35,15 @@ export function TodaysActivitiesTable({ userId }: TodaysActivitiesTableProps) {
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    // Check if userId is available before fetching
+    if (!userId) {
+        setIsLoading(false);
+        return;
+    }
 
     const q = query(
-      collection(db, "activities"),
+      collection(db, `activities`),
       where("userId", "==", userId),
       where("createdAt", ">=", Timestamp.fromDate(today)),
       where("createdAt", "<", Timestamp.fromDate(tomorrow)),
@@ -48,7 +54,15 @@ export function TodaysActivitiesTable({ userId }: TodaysActivitiesTableProps) {
       const userActivities: Activity[] = [];
       querySnapshot.forEach((doc) => {
         userActivities.push({ id: doc.id, ...doc.data() } as Activity);
+
       });
+      // Sort activities by createdAt descending, as Firestore orderBy might not be guaranteed client-side with onSnapshot without indexing
+      userActivities.sort((a, b) => {
+        const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
+        const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
+        return dateB - dateA; // Descending
+      });
+
       setActivities(userActivities);
       setIsLoading(false);
     });
@@ -57,6 +71,10 @@ export function TodaysActivitiesTable({ userId }: TodaysActivitiesTableProps) {
   }, [userId]);
 
   const handleDelete = async (activity: Activity) => {
+    if (!userId || !activity?.id) {
+        toast({ title: "Error", description: "Unable to delete activity. Missing user or activity ID.", variant: "destructive" });
+        return;
+    }
     try {
       // Delete from Firestore
       await deleteDoc(doc(db, "activities", activity.id));
@@ -64,7 +82,7 @@ export function TodaysActivitiesTable({ userId }: TodaysActivitiesTableProps) {
       // Delete from Storage if evidence exists
       if (activity.evidenceUrl) {
         const fileRef = ref(storage, activity.evidenceUrl);
-        await deleteObject(fileRef);
+        await deleteObject(fileRef).catch((storageError) => console.warn("Failed to delete storage evidence:", storageError)); // Catch storage error gracefully
       }
       
       toast({
@@ -119,7 +137,11 @@ export function TodaysActivitiesTable({ userId }: TodaysActivitiesTableProps) {
                     <TableCell className="font-medium">{activity.activityName}</TableCell>
                     <TableCell>{activity.activityType}</TableCell>
                     <TableCell className="text-right">{activity.durationMinutes}</TableCell>
-                    <TableCell>
+                    {/* Add a check for activity.status existence and validity */}
+                    <TableCell>{activity.status && statusConfig[activity.status] ? (
+                        // @ts-ignore - StatusIcon type is inferred dynamically but known at runtime based on statusConfig
+                        <>
+
                        <Badge variant="outline" className="flex items-center gap-1.5 whitespace-nowrap">
                          <StatusIcon className={`w-3.5 h-3.5 ${statusColor} text-white rounded-full p-0.5`} />
                          {statusText}
@@ -127,6 +149,11 @@ export function TodaysActivitiesTable({ userId }: TodaysActivitiesTableProps) {
                     </TableCell>
                     <TableCell>
                       <AlertDialog>
+                         </>
+                    ) : (
+                       <Badge variant="outline">Unknown Status</Badge>
+                    )}</TableCell>
+                    <TableCell> {/* Actions Cell */}
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
                             <Trash2 className="h-4 w-4" />
@@ -140,7 +167,7 @@ export function TodaysActivitiesTable({ userId }: TodaysActivitiesTableProps) {
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel asChild><Button variant="outline">Cancel</Button></AlertDialogCancel>
                             <AlertDialogAction onClick={() => handleDelete(activity)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>

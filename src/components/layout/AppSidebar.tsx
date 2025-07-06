@@ -2,18 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut } from "firebase/auth";
+import { signOut, Auth } from "firebase/auth"; // Import Auth type
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarFooter,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-} from "@/components/ui/sidebar";
+import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar"; // Correctly import components
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, BarChart3, ShieldCheck, LogOut, Loader2, Workflow } from "lucide-react";
 
@@ -22,7 +14,7 @@ export function AppSidebar() {
   const router = useRouter();
   const { userProfile, loading } = useAuth();
 
-  const handleSignOut = async () => {
+  const handleSignOut = async (auth: Auth) => { // Pass auth instance
     await signOut(auth);
     router.push("/login");
   };
@@ -66,7 +58,7 @@ export function AppSidebar() {
         )}
       </SidebarContent>
       <SidebarFooter>
-         <Button variant="ghost" className="w-full justify-start gap-2" onClick={handleSignOut}>
+         <Button variant="ghost" className="w-full justify-start gap-2" onClick={() => handleSignOut(auth)}> {/* Pass auth instance */}
             <LogOut className="w-4 h-4" />
             <span>Sign Out</span>
          </Button>

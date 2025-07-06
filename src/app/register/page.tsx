@@ -45,7 +45,7 @@ export default function Register() {
       toast({
         variant: "destructive",
         title: "Registration Failed",
-        description: error.message,
+        description: error.message || "An unexpected error occurred.",
       });
     } finally {
       setIsLoading(false);
@@ -53,8 +53,8 @@ export default function Register() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="mx-auto max-w-sm w-full shadow-2xl">
+    <div className="flex min-h-screen items-center justify-center p-4" style={{ background: 'linear-gradient(to bottom right, var(--tw-color-background), var(--tw-color-background) 50%)' }}>
+      <Card className="mx-auto max-w-sm w-full bg-white/30 shadow-2xl backdrop-filter backdrop-blur-md">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold">SmartRoutine Pro</CardTitle>
           <CardDescription>Create your account to start building better habits.</CardDescription>
@@ -74,11 +74,11 @@ export default function Register() {
               <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-white" />}
               Create an account
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-4 text-center text-sm text-foreground">
             Already have an account?{" "}
             <Link href="/login" className="underline text-primary-foreground/80 hover:text-primary-foreground">
               Sign in
