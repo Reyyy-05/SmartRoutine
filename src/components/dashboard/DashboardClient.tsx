@@ -189,7 +189,7 @@ export function DashboardClient() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-fr">
         <ActivityForm userId={user.uid} />
         
-        <TodaysActivitiesTable userId={user.uid} />
+        <TodaysActivitiesTable />
 
         <div className="flex flex-col gap-6">
             <Card className="shadow-lg border-none bg-card/80 backdrop-filter backdrop-blur-lg">
