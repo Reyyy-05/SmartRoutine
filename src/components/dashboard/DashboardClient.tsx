@@ -13,7 +13,7 @@ import { ActivityForm } from "./ActivityForm";
 import { TodaysActivitiesTable } from "./TodaysActivitiesTable";
 import { ProductivityInsights } from "./ProductivityInsights";
 import { Goal, Activity } from "@/types";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 

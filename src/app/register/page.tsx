@@ -54,7 +54,7 @@ export default function Register() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-background">
-      <Card className="mx-auto max-w-sm w-full bg-card/80 shadow-2xl backdrop-filter backdrop-blur-md">
+      <Card className="mx-auto max-w-sm w-full bg-card/80 shadow-2xl backdrop-blur-md">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold">SmartRoutine Pro</CardTitle>
           <CardDescription>Create your account to start building better habits.</CardDescription>

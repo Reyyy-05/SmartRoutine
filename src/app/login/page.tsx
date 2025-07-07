@@ -42,7 +42,7 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="mx-auto max-w-sm w-full bg-card/80 shadow-xl backdrop-filter backdrop-blur-lg border-white/20 rounded-lg transition-all duration-300 ease-in-out hover:shadow-2xl">
+      <Card className="mx-auto max-w-sm w-full bg-card/80 shadow-xl backdrop-blur-lg border-white/20 rounded-lg transition-all duration-300 ease-in-out hover:shadow-2xl">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold">SmartRoutine Pro</CardTitle>
           <CardDescription>Sign in to continue your journey.</CardDescription>
