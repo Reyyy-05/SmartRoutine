@@ -16,7 +16,7 @@ const firebaseConfig = {
 
 // Validate that Firebase config keys are set
 if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("your_")) {
-    throw new Error("Firebase API Key is not set or is still a placeholder. Please add `NEXT_PUBLIC_FIREBASE_API_KEY` to your .env.local file with a valid key from your Firebase project.");
+ throw new Error("Firebase API Key is not set or is still a placeholder. Please add NEXT_PUBLIC_FIREBASE_API_KEY to your .env.local file with a valid key from your Firebase project.");
 }
 
 // Initialize Firebase
